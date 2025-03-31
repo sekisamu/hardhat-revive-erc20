@@ -1,26 +1,15 @@
 require("@nomicfoundation/hardhat-toolbox");
-
-require("hardhat-resolc");
-require("hardhat-revive-node");
-
 require("dotenv").config();
+
+const USE_RESOLC = process.env.USE_RESOLC === 'true';
+if (USE_RESOLC) {
+  require("hardhat-resolc");
+  require("hardhat-revive-node");
+}
 
 /** @type import('hardhat/config').HardhatUserConfig */
 module.exports = {
   solidity: "0.8.28",
-  // using binary compiler
-  resolc: {
-    compilerSource: 'binary',
-    settings: {
-      optimizer: {
-        enabled: true,
-        runs: 400,
-      },
-      evmVersion: 'istanbul',
-      compilerPath: '~/.cargo/bin/resolc',
-      standardJson: true,
-    },
-  },
   networks: {
     hardhat: {
       polkavm: true,
@@ -46,5 +35,30 @@ module.exports = {
       url: "https://westend-asset-hub-eth-rpc.polkadot.io",
       accounts: [process.env.AH_PRIV_KEY, process.env.LOCAL_PRIV_KEY],
     },
+
+    sepolia: {
+      url: "https://eth-sepolia.public.blastapi.io",
+      accounts: [process.env.LOCAL_PRIV_KEY],
+     },
+
+     moonbeam: {
+      url: "https://moonbeam.api.onfinality.io/public",
+      accounts: [process.env.LOCAL_PRIV_KEY],
+     },
   },
+
+  ...(USE_RESOLC ? {
+    resolc: {
+      compilerSource: 'binary',
+      settings: {
+        optimizer: {
+          enabled: true,
+          runs: 400,
+        },
+        evmVersion: 'istanbul',
+        compilerPath: '~/.cargo/bin/resolc',
+        standardJson: true,
+      },
+    },
+  } : {})
 };
