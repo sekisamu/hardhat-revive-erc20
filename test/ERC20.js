@@ -1,38 +1,38 @@
-const {chai, expect } = require("chai");
+const { chai, expect } = require("chai");
 const { hre, ethers } = require("hardhat");
-const { 
+const {
   BigInt,
   getBigInt,
   getAddress,
   keccak256,
   AbiCoder,
   toUtf8Bytes,
-  solidityPack
-} = require('ethers')
+  solidityPack,
+} = require("ethers");
+require("@nomicfoundation/hardhat-chai-matchers");
 
+const TOTAL_SUPPLY = ethers.parseEther("10000");
+const TEST_AMOUNT = ethers.parseEther("10");
 
-const TOTAL_SUPPLY = ethers.parseEther('10000')
-const TEST_AMOUNT = ethers.parseEther('10')
-
-describe('ERC20', function () {
-
+describe("ERC20", function () {
   let token;
   let wallet;
   let other;
-  
+
   beforeEach(async function () {
+    const signers = await ethers.getSigners();
+
+    [wallet, other] = signers;
+
     const ERC20 = await ethers.getContractFactory("ERC20");
 
     token = await ERC20.deploy(TOTAL_SUPPLY);
     await token.waitForDeployment();
-    [wallet, other] = await ethers.getSigners();
 
-    // send balance to other
     await wallet.sendTransaction({
       to: other.address,
-      value: ethers.parseEther('1')
+      value: ethers.parseEther("100"),
     });
-
   });
 
   // it('name, symbol, decimals, totalSupply, balanceOf', async () => {
@@ -67,12 +67,17 @@ describe('ERC20', function () {
   //   await expect(token.connect(other).transfer(wallet.address, 1)).to.be.reverted // ds-math-sub-underflow
   // })
 
-  it('transferFrom', async () => {
+  it("transferFrom", async () => {
+    // First test: transferFrom by wallet (who hasn't approved anything)
+    await expect(token.transferFrom(other.address, wallet.address, 0))
+      .to.emit(token, "Transfer")
+      .withArgs(other.address, wallet.address, 0);
 
-    await expect(token.transferFrom(other.address, wallet.address, 0)).to.emit(
-      token, 'Transfer'
-    ).withArgs(other.address, wallet.address, 0);
-    await expect(token.connect(other).transferFrom(wallet.address, other.address, 0)).to.be.reverted;
-  })
-
-})
+    // Second test: other calls transferFrom (with no allowance, but amount is 0)
+    await expect(
+      token.connect(other).transferFrom(wallet.address, other.address, 0)
+    )
+      .to.emit(token, "Transfer")
+      .withArgs(wallet.address, other.address, 0);
+  });
+});
