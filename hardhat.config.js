@@ -22,7 +22,7 @@ module.exports = {
     ah: {
       polkavm: true,
       url: 'https://westend-asset-hub-eth-rpc.polkadot.io',
-      accounts: [process.env.LOCAL_PRIV_KEY],
+      accounts: [process.env.AH_PRIV_KEY, process.env.LOCAL_PRIV_KEY],
     },
     sepolia: {
       url: 'https://eth-sepolia.public.blastapi.io',

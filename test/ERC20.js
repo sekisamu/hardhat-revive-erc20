@@ -68,11 +68,13 @@ describe('ERC20', function () {
   // })
 
   it('transferFrom', async () => {
+    console.log("wallet balance before transfer", await ethers.provider.getBalance(wallet.address))
+    await expect(token.transferFrom(other.address, wallet.address, 0)).to.emit(token, 'Transfer').withArgs(other.address, wallet.address, 0);
+    console.log("wallet balance after transfer", await ethers.provider.getBalance(wallet.address))
 
-    await expect(token.transferFrom(other.address, wallet.address, 0)).to.emit(
-      token, 'Transfer'
-    ).withArgs(other.address, wallet.address, 0);
-    await expect(token.connect(other).transferFrom(wallet.address, other.address, 0)).to.be.reverted;
+    console.log("other balance before transfer", await ethers.provider.getBalance(other.address))
+    await expect(token.connect(other).transferFrom(wallet.address, other.address, 0)).to.emit(token, 'Transfer').withArgs(wallet.address, other.address, 0);
+    console.log("other balance after transfer", await ethers.provider.getBalance(other.address))
   })
 
 })
