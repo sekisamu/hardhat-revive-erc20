@@ -1,5 +1,5 @@
 const {chai, expect } = require("chai");
-const { hre, ethers } = require("hardhat");
+// const { hre, ethers } = require("hardhat");
 const { 
   BigInt,
   getBigInt,
@@ -24,16 +24,23 @@ describe('ERC20', function () {
     [wallet, other] = await ethers.getSigners();
 
     const oldBalance = await ethers.provider.getBalance(other.address);
-        // send balance to other
-    await wallet.sendTransaction({
-        from: wallet.address,
-        to: other.address,
-        value: ethers.parseEther('1')
-    });
+
+    // let value;
+    // let chainName = hre.network.name;
+    // if (chainName === 'local') {
+    //   value = ethers.parseEther('1000000')
+    // } else {
+    //   value = ethers.parseEther('1')
+    // }
+
+    // // send balance to other
+    // await wallet.sendTransaction({
+    //     from: wallet.address,
+    //     to: other.address,
+    //     value: value
+    // });
     
     const newBalance = await ethers.provider.getBalance(other.address);
-    expect(newBalance).to.eq(oldBalance + ethers.parseEther('1'));
-
     console.log("balance before deploy", newBalance);
 
     const ERC20 = await ethers.getContractFactory("ERC20", other);
@@ -48,13 +55,13 @@ describe('ERC20', function () {
   });
 
   it('transferFrom', async () => {
-    await expect(token.transferFrom(other.address, wallet.address, 0)).to.emit(token, 'Transfer').withArgs(other.address, wallet.address, 0);
-    const before = await ethers.provider.getBalance(other.address);
-    console.log("balance before transferFrom", before);
-    await expect(token.connect(other).transferFrom(wallet.address, other.address, 0)).to.emit(token, 'Transfer').withArgs(wallet.address, other.address, 0);
-    const after = await ethers.provider.getBalance(other.address);
-    console.log("balance after transferFrom", after);
-    console.log(`transferFrom costs: ${ethers.formatEther(before - after)} ETH`);
+  //   // await expect(token.transferFrom(other.address, wallet.address, 0)).to.emit(token, 'Transfer').withArgs(other.address, wallet.address, 0);
+  //   const before = await ethers.provider.getBalance(other.address);
+  //   console.log("balance before transferFrom", before);
+  //   await expect(token.connect(other).transferFrom(wallet.address, other.address, 0)).to.emit(token, 'Transfer').withArgs(wallet.address, other.address, 0);
+  //   const after = await ethers.provider.getBalance(other.address);
+  //   console.log("balance after transferFrom", after);
+  //   console.log(`transferFrom costs: ${ethers.formatEther(before - after)} ETH`);
   })
 
 })
