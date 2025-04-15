@@ -8,8 +8,8 @@ const {
   AbiCoder,
   toUtf8Bytes,
   solidityPack
-} = require('ethers')
-
+} = require('ethers');
+const { ethers } = require("hardhat");
 
 const TOTAL_SUPPLY = ethers.parseEther('10000')
 const TEST_AMOUNT = ethers.parseEther('10')
@@ -22,40 +22,14 @@ describe('ERC20', function () {
   
   beforeEach(async function () {
     [wallet, other] = await ethers.getSigners();
-
-    const oldBalance = await ethers.provider.getBalance(other.address);
-
-    let value;
-    let chainName = hre.network.name;
-    if (chainName === 'local') {
-      value = ethers.parseEther('1000000')
-    } else {
-      value = ethers.parseEther('1')
-    }
-
-    // send balance to other
-    await wallet.sendTransaction({
-        from: wallet.address,
-        to: other.address,
-        value: value
-    });
-    
-    const newBalance = await ethers.provider.getBalance(other.address);
-    console.log("balance before deploy", newBalance);
-
-    const ERC20 = await ethers.getContractFactory("ERC20", other);
+    const ERC20 = await ethers.getContractFactory("ERC20");
 
     token = await ERC20.deploy(TOTAL_SUPPLY);
     await token.waitForDeployment();
-
-    console.log("balance after deploy", await ethers.provider.getBalance(other.address));
-
-    const deployCost = ethers.formatEther(newBalance - await ethers.provider.getBalance(other.address));
-    console.log(`erc20 eployment costs: ${deployCost} ETH`);
   });
 
   it('gas used diffrently every time', async () => {
-    let tx1 = await token.approve(other.address,0);
+    let tx1 = await token.transfer(other.address,0);
     let receipt1 = await tx1.wait();
     console.log("gas used in tx1", receipt1.gasUsed);
 
