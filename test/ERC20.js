@@ -1,5 +1,5 @@
 const {chai, expect } = require("chai");
-const { hre, ethers } = require("hardhat");
+// const { hre, ethers } = require("hardhat");
 const { 
   BigInt,
   getBigInt,
@@ -21,60 +21,63 @@ describe('ERC20', function () {
   let other;
   
   beforeEach(async function () {
-    const ERC20 = await ethers.getContractFactory("ERC20");
-
-    token = await ERC20.deploy(TOTAL_SUPPLY);
-    await token.waitForDeployment();
     [wallet, other] = await ethers.getSigners();
+
+    const oldBalance = await ethers.provider.getBalance(other.address);
+
+    let value;
+    let chainName = hre.network.name;
+    if (chainName === 'local') {
+      value = ethers.parseEther('1000000')
+    } else {
+      value = ethers.parseEther('1')
+    }
 
     // send balance to other
     await wallet.sendTransaction({
-      to: other.address,
-      value: ethers.parseEther('1')
+        from: wallet.address,
+        to: other.address,
+        value: value
     });
+    
+    const newBalance = await ethers.provider.getBalance(other.address);
+    console.log("balance before deploy", newBalance);
 
+    const ERC20 = await ethers.getContractFactory("ERC20", other);
+
+    token = await ERC20.deploy(TOTAL_SUPPLY);
+    await token.waitForDeployment();
+
+    console.log("balance after deploy", await ethers.provider.getBalance(other.address));
+
+    const deployCost = ethers.formatEther(newBalance - await ethers.provider.getBalance(other.address));
+    console.log(`erc20 eployment costs: ${deployCost} ETH`);
   });
 
-  // it('name, symbol, decimals, totalSupply, balanceOf', async () => {
-  //   const [deployer] = await ethers.getSigners();
-  //   const abiCoder = new AbiCoder();
-  //   const name = await token.name();
-  //   expect(name).to.eq('Uniswap V2');
-  //   expect(await token.symbol()).to.eq('UNI-V2')
-  //   expect(await token.decimals()).to.eq(18)
-  //   expect(await token.totalSupply()).to.eq(TOTAL_SUPPLY)
-  //   expect(await token.balanceOf(deployer.address)).to.eq(TOTAL_SUPPLY)
-  // })
+  it('gas used diffrently every time', async () => {
+    let tx1 = await token.approve(other.address,0);
+    let receipt1 = await tx1.wait();
+    console.log("gas used in tx1", receipt1.gasUsed);
 
-  // it('approve', async () => {
-  //   let walletAddress = await wallet.getAddress();
-  //   await expect(token.approve(other.address, TEST_AMOUNT))
-  //     .to.emit(token, 'Approval')
-  //     .withArgs(walletAddress, other.getAddress(), TEST_AMOUNT)
-  //   expect(await token.allowance(walletAddress, other.address)).to.eq(TEST_AMOUNT)
-  // })
+    let tx2 = await token.transfer(other.address,0);
+    let receipt2 = await tx2.wait();
+    console.log("gas used in tx2", receipt2.gasUsed);
 
-  // it('transfer', async () => {
-  //   await expect(token.transfer(other.address, TEST_AMOUNT))
-  //     .to.emit(token, 'Transfer')
-  //     .withArgs(wallet.address, other.address, TEST_AMOUNT)
-  //   expect(await token.balanceOf(wallet.address)).to.eq(TOTAL_SUPPLY - TEST_AMOUNT)
-  //   expect(await token.balanceOf(other.address)).to.eq(TEST_AMOUNT)
-  // })
+    let tx3 = await token.transfer(other.address,0);
+    let receipt3 = await tx3.wait();
+    console.log("gas used in tx3", receipt3.gasUsed);
 
-  // it('transfer:fail', async () => {
-  //   await expect(token.transfer(other.address, TOTAL_SUPPLY + 1n)).to.be.reverted // ds-math-sub-underflow
-  //   await expect(token.connect(other).transfer(wallet.address, 1)).to.be.reverted // ds-math-sub-underflow
-  // })
+    let tx4 = await token.transfer(other.address,0);
+    let receipt4 = await tx4.wait();
+    console.log("gas used in tx4", receipt4.gasUsed);
 
-  it('transferFrom', async () => {
-    console.log("wallet balance before transfer", await ethers.provider.getBalance(wallet.address))
-    await expect(token.transferFrom(other.address, wallet.address, 0)).to.emit(token, 'Transfer').withArgs(other.address, wallet.address, 0);
-    console.log("wallet balance after transfer", await ethers.provider.getBalance(wallet.address))
+    let tx5 = await token.transfer(other.address,0);
+    let receipt5 = await tx5.wait();
+    console.log("gas used in tx5", receipt5.gasUsed);
 
-    console.log("other balance before transfer", await ethers.provider.getBalance(other.address))
-    await expect(token.connect(other).transferFrom(wallet.address, other.address, 0)).to.emit(token, 'Transfer').withArgs(wallet.address, other.address, 0);
-    console.log("other balance after transfer", await ethers.provider.getBalance(other.address))
+    let tx6 = await token.transfer(other.address,0);
+    let receipt6 = await tx6.wait();
+    console.log("gas used in tx6", receipt6.gasUsed);
   })
 
 })
